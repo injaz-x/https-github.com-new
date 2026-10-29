@@ -351,8 +351,8 @@ body.lt .eyb b{color:#3d5bd0}
 @media(max-width:700px){.ib{width:36px;height:36px}#clock{display:none}.sh{padding-top:14px}}
 #fsSetup[hidden],#fsRun[hidden]{display:none!important}
 
-#auth{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg,#0f1318);overflow:auto}
-.auth-in{width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px;text-align:center}
+#auth{position:fixed;inset:0;z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px 24px;background:var(--bg,#0f1318);overflow:auto}
+.auth-in{margin:auto;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px;text-align:center}
 .auth-in h1{margin:0;font-size:28px}.auth-in .f{display:flex;flex-direction:column;gap:6px;text-align:right;font-size:13px}
 .auth-in input{padding:12px;border-radius:12px;border:1px solid var(--line,#2a3342);background:var(--field,#161c26);color:inherit;font:inherit;font-size:16px}
 .auth-logo{width:72px;height:72px;margin:0 auto;border-radius:18px;background:var(--logo) center/cover}
