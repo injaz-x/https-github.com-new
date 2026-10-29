@@ -43,7 +43,7 @@ function eduSubjects(e){
       const x={med:[C.math,C.phys],eng:[C.chem,C.prog],biz:[C.acc,C.biz],art:[C.psy,C.l2]}[t]||[];
       L=L.concat(x,[C.fin,C.pe]);
     }else{
-      const x={med:[C.bioA,C.chemA],eng:[C.mathA,C.physA],biz:[C.ecoA,C.math],art:[C.geoA,C.stat]}[t]||[];
+      const x={med:[C.bioA,C.chemA],eng:[C.mathA,C.physA,C.prog],biz:[C.ecoA,C.math],art:[C.geoA,C.stat]}[t]||[];
       L=x.concat([C.rel]);
     }
   }
