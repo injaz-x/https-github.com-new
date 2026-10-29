@@ -109,6 +109,7 @@ function authMarkup(mode){
   (su?'<label class="f">تأكيد كلمة المرور<input id="au-pass2" type="password" dir="ltr" maxlength="72" autocomplete="new-password" style="text-align:left"></label><label class="f">بريدك الإلكتروني لاسترجاع كلمة المرور (اختياري)<input id="au-mail" type="email" dir="ltr" maxlength="120" autocomplete="email" placeholder="you@example.com" style="text-align:left"></label><p class="mut sm" style="margin:0">إن نسيت كلمة المرور يصلك كود على هذا البريد لتفتح حسابك وتضع كلمة جديدة. بدونه لا توجد وسيلة للاسترجاع، فاستخدم بريداً يخصك أنت.</p>':'')+
   '<div class="ar-msg bad" id="au-msg" role="alert"></div>'+
   '<button class="btn big" id="au-go" data-a="authgo" data-m="'+(su?'up':'in')+'">'+(su?'إنشاء الحساب':'دخول')+'</button>'+
+  '<section class="mut sm" style="margin-top:14px;text-align:right"><h2 style="font-size:1em;margin:0 0 4px">ماذا يقدّم إنجاز؟</h2><ul style="margin:0;padding-inline-start:18px;line-height:1.7"><li>مؤقت مذاكرة وخطة أسبوعية لمواد مرحلتك</li><li>كتب الوزارة PDF لكل مرحلة: ابتدائي وإعدادي وثانوي</li><li>امتحان أسبوعي بالحلول وتدريب على كل مادة</li><li>رياضة وأكل ونوم وماء بمعايير عالمية</li></ul></section>'+
   ((window.INJAZ&&window.INJAZ.privacyUrl)?'<p class="mut sm" style="margin:10px 0 0">بالمتابعة توافق على <a href="'+window.INJAZ.privacyUrl+'" target="_blank" rel="noopener">سياسة الخصوصية</a>.</p>':'')+'</div>';
 }
 let authDone=null;

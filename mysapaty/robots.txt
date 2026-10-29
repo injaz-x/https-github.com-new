@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://aamedabdou-alt.github.io/https-github.com-new/mysapaty/sitemap.xml
