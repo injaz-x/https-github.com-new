@@ -2203,7 +2203,8 @@ function authMarkup(mode){
   (su?'<label class="f">الاسم<input id="au-name" type="text" maxlength="40" autocomplete="name" placeholder="اسمك كما تحب أن يظهر"></label>':'')+
   '<label class="f">اسم المستخدم<input id="au-user" type="text" dir="ltr" maxlength="24" autocapitalize="none" autocomplete="username" placeholder="e.g. ahmed.2008" style="text-align:left"></label>'+
   '<label class="f">كلمة المرور<input id="au-pass" type="password" dir="ltr" maxlength="72" autocomplete="'+(su?'new-password':'current-password')+'" placeholder="English only, 8+ characters" style="text-align:left"></label>'+
-  (su?'<label class="f">تأكيد كلمة المرور<input id="au-pass2" type="password" dir="ltr" maxlength="72" autocomplete="new-password" style="text-align:left"></label><p class="mut sm" style="margin:0">لا توجد وسيلة لاستعادة كلمة المرور، فاحتفظ بها في مكان آمن.</p>':'')+
+  (su?'':'<button class="lnk" data-a="forgot" type="button" style="background:none;border:0;color:var(--acc);padding:0;text-align:right;cursor:pointer">نسيت كلمة المرور؟</button>')+
+  (su?'<label class="f">تأكيد كلمة المرور<input id="au-pass2" type="password" dir="ltr" maxlength="72" autocomplete="new-password" style="text-align:left"></label><label class="f">بريدك الإلكتروني لاسترجاع كلمة المرور (اختياري)<input id="au-mail" type="email" dir="ltr" maxlength="120" autocomplete="email" placeholder="you@example.com" style="text-align:left"></label><p class="mut sm" style="margin:0">إن نسيت كلمة المرور يصلك كود على هذا البريد لتفتح حسابك وتضع كلمة جديدة. بدونه لا توجد وسيلة للاسترجاع، فاستخدم بريداً يخصك أنت.</p>':'')+
   '<div class="ar-msg bad" id="au-msg" role="alert"></div>'+
   '<button class="btn big" id="au-go" data-a="authgo" data-m="'+(su?'up':'in')+'">'+(su?'إنشاء الحساب':'دخول')+'</button>'+
   ((window.INJAZ&&window.INJAZ.privacyUrl)?'<p class="mut sm" style="margin:10px 0 0">بالمتابعة توافق على <a href="'+window.INJAZ.privacyUrl+'" target="_blank" rel="noopener">سياسة الخصوصية</a>.</p>':'')+'</div>';
@@ -2224,6 +2225,8 @@ ACT.authgo=async t=>{
   if(!/^[\x21-\x7E]+$/.test(p))return authMsg('كلمة المرور بالإنجليزية فقط (حروف وأرقام ورموز) وبلا مسافات.');
   if(p.length<8)return authMsg('كلمة المرور 8 أحرف على الأقل.');
   if(up&&p!==document.getElementById('au-pass2').value)return authMsg('كلمتا المرور غير متطابقتين.');
+  const mail=up?(document.getElementById('au-mail').value||'').trim().toLowerCase():'';
+  if(mail&&!MAIL_RE.test(mail))return authMsg('البريد غير صحيح. اكتبه بالإنجليزية مثل name@example.com أو اتركه فارغاً.');
   if(!navigator.onLine)return authMsg('تحتاج اتصالاً بالإنترنت لتسجيل الدخول أو إنشاء الحساب.');
   t.disabled=true;authMsg('');
   try{
@@ -2231,15 +2234,56 @@ ACT.authgo=async t=>{
     if(up){r=await CLOUD.client.auth.signUp({email:CLOUD.email(u),password:p,options:{data:{username:u,name:name}}});if(r.error)throw r.error;if(!r.data.session)throw new Error('email confirm')}
     else{r=await CLOUD.client.auth.signInWithPassword({email:CLOUD.email(u),password:p});if(r.error)throw r.error}
     const user=r.data.user;
-    if(up){const keep=lsGet('ab:__uid');if(keep&&keep!==user.id){clearLocal()}CLOUD.user=user;lsSet('ab:profile',JSON.stringify({name:name,username:u}));lsSet('ab:__uid',user.id);CLOUD.q={profile:1};lsSet('ab:__q',JSON.stringify(CLOUD.q));if(dataKeys().length>1){dataKeys().forEach(k=>{if(!LOCAL_ONLY.includes(k))CLOUD.q[k]=1});lsSet('ab:__q',JSON.stringify(CLOUD.q))}CLOUD.start();location.reload();return}
+    if(up){if(mail){try{await CLOUD.client.from('user_contact').upsert({username:u,user_id:r.data.user.id,email:mail},{onConflict:'username'})}catch(x){}}
+      const keep=lsGet('ab:__uid');if(keep&&keep!==user.id){clearLocal()}CLOUD.user=user;lsSet('ab:profile',JSON.stringify({name:name,username:u}));lsSet('ab:__uid',user.id);CLOUD.q={profile:1};lsSet('ab:__q',JSON.stringify(CLOUD.q));if(dataKeys().length>1){dataKeys().forEach(k=>{if(!LOCAL_ONLY.includes(k))CLOUD.q[k]=1});lsSet('ab:__q',JSON.stringify(CLOUD.q))}CLOUD.start();location.reload();return}
     const res=await CLOUD.begin(user);
     if(res===true){const el=document.getElementById('auth');if(el)el.remove();authDone&&authDone(true)}
   }catch(e){t.disabled=false;authMsg(CLOUD.msg(e))}
+};
+
+const MAIL_RE=/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+const maskMail=m=>{const i=m.indexOf('@');return i<1?m:m[0]+'***'+m.slice(i-1>0?i-1:i)};
+/* ----- استرجاع كلمة المرور بكود على البريد ----- */
+let fgUser='';
+function forgotMarkup(step,msg){
+  return '<div class="auth-in"><div class="auth-logo"></div><h1>استرجاع كلمة المرور</h1>'+
+  (step===1?'<p class="mut">اكتب اسم المستخدم، وسنرسل كوداً إلى البريد المربوط بحسابك.</p><label class="f">اسم المستخدم<input id="au-user" type="text" dir="ltr" maxlength="24" autocapitalize="none" autocomplete="username" style="text-align:left"></label>':
+  '<p class="mut">إن كان لحسابك <b dir="ltr">@'+esc(fgUser)+'</b> بريد مربوط فقد أرسلنا إليه كوداً من 6 أرقام (راجع البريد المزعج أيضاً). أدخله مع كلمة المرور الجديدة.</p><label class="f">الكود<input id="fg-code" type="text" inputmode="numeric" dir="ltr" maxlength="8" autocomplete="one-time-code" style="text-align:left;letter-spacing:4px"></label>'+
+  '<label class="f">كلمة المرور الجديدة<input id="au-pass" type="password" dir="ltr" maxlength="72" autocomplete="new-password" placeholder="English only, 8+ characters" style="text-align:left"></label><label class="f">تأكيد كلمة المرور<input id="au-pass2" type="password" dir="ltr" maxlength="72" autocomplete="new-password" style="text-align:left"></label>')+
+  '<div class="ar-msg bad" id="au-msg" role="alert">'+esc(msg||'')+'</div>'+
+  '<button class="btn big" id="au-go" data-a="'+(step===1?'fgsend':'fgreset')+'">'+(step===1?'إرسال الكود':'تغيير كلمة المرور والدخول')+'</button>'+
+  '<button class="btn g" data-a="authmode" data-m="in" style="margin-top:8px">رجوع لتسجيل الدخول</button></div>';
+}
+ACT.forgot=()=>{const el=document.getElementById('auth');if(el)el.innerHTML=forgotMarkup(1)};
+ACT.fgsend=async t=>{
+  const u=(document.getElementById('au-user').value||'').trim().toLowerCase();
+  if(!/^[a-z0-9._]{3,24}$/.test(u))return authMsg('اسم المستخدم: 3 إلى 24 حرفاً إنجليزياً صغيراً أو أرقاماً أو . أو _');
+  if(!navigator.onLine)return authMsg('تحتاج اتصالاً بالإنترنت.');
+  t.disabled=true;authMsg('');
+  try{await CLOUD.client.functions.invoke('recover',{body:{action:'send',username:u}})}catch(e){}
+  fgUser=u;const el=document.getElementById('auth');if(el)el.innerHTML=forgotMarkup(2);
+};
+ACT.fgreset=async t=>{
+  const code=(document.getElementById('fg-code').value||'').replace(/\D/g,''),p=document.getElementById('au-pass').value||'';
+  if(code.length<6)return authMsg('اكتب الكود المكوّن من 6 أرقام.');
+  if(!/^[\x21-\x7E]+$/.test(p))return authMsg('كلمة المرور بالإنجليزية فقط (حروف وأرقام ورموز) وبلا مسافات.');
+  if(p.length<8)return authMsg('كلمة المرور 8 أحرف على الأقل.');
+  if(p!==document.getElementById('au-pass2').value)return authMsg('كلمتا المرور غير متطابقتين.');
+  t.disabled=true;authMsg('');
+  try{
+    const v=await CLOUD.client.auth.verifyOtp({email:CLOUD.email(fgUser),token:code,type:'recovery'});
+    if(v.error||!v.data||!v.data.user)throw new Error('badcode');
+    const up=await CLOUD.client.auth.updateUser({password:p});if(up.error)throw up.error;
+    const res=await CLOUD.begin(v.data.user);
+    if(res===true){const el=document.getElementById('auth');if(el)el.remove();authDone&&authDone(true);toast('تم تغيير كلمة المرور')}
+  }catch(e){t.disabled=false;authMsg(e&&e.message==='badcode'?'الكود غير صحيح أو انتهت صلاحيته. اطلب كوداً جديداً.':CLOUD.msg(e))}
 };
 /* اسم المستخدم وكلمة المرور بالإنجليزية فقط: تُحذف أي أحرف غيرها أثناء الكتابة */
 document.addEventListener('input',e=>{
   const t=e.target;if(!t||!t.id)return;
   if(t.id==='au-user'){const v=t.value.toLowerCase().replace(/[^a-z0-9._]/g,'');if(v!==t.value){t.value=v;authMsg('اسم المستخدم بالإنجليزية فقط: حروف صغيرة وأرقام و . و _')}else authMsg('')}
+  else if(t.id==='fg-code'){const v=t.value.replace(/\D/g,'');if(v!==t.value)t.value=v}
+  else if(t.id==='au-mail'){const v=t.value.replace(/[^\x21-\x7E]/g,'');if(v!==t.value){t.value=v;authMsg('البريد بالإنجليزية فقط.')}}
   else if(t.id==='au-pass'||t.id==='au-pass2'){const v=t.value.replace(/[^\x21-\x7E]/g,'');if(v!==t.value){t.value=v;authMsg('كلمة المرور بالإنجليزية فقط (حروف وأرقام ورموز) وبلا مسافات.')}else authMsg('')}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('auth')){const b=document.getElementById('au-go');if(b&&!b.disabled)b.click()}});
@@ -2259,11 +2303,27 @@ async function cloudGate(){
 /* ----- الحساب ----- */
 ACT.account=()=>{
   const p=st.get('profile',{}),n=Object.keys(CLOUD.q).length;
+  setTimeout(ctLoad,0);
   sheet('<h3>حسابي</h3><div class="card" style="margin:8px 0"><div class="b">'+esc(p.name||'')+'</div><div class="mut sm">'+esc(eduLabel())+'</div><div class="mut sm" dir="ltr" style="text-align:right">@'+esc(p.username||'')+'</div></div>'+
    '<p class="mut sm">'+(CLOUD.err?esc(CLOUD.err):CLOUD.off?'أنت غير متصل. بياناتك محفوظة على هاتفك وسترفع عند عودة الإنترنت.':n?'جارٍ حفظ '+n+' عنصر في حسابك…':'كل بياناتك محفوظة في حسابك.')+'</p>'+
+   '<div class="card" style="margin:10px 0"><div class="b">بريد استرجاع كلمة المرور</div><div class="mut sm" id="ct-info" dir="ltr" style="text-align:right">…</div><button class="btn g s" data-a="ctedit" style="margin-top:6px">ربط / تغيير البريد</button></div>'+
    '<div class="row" style="margin-top:10px"><button class="btn g" data-a="syncnow">مزامنة الآن</button><button class="btn g" data-a="logout">تسجيل الخروج</button></div>'+
    '<div class="row" style="margin-top:18px;border-top:1px solid var(--line);padding-top:14px"><button class="btn d" data-a="delacct">حذف حسابي وبياناتي نهائياً</button></div><p class="mut sm">الحذف يمسح حسابك وكل بياناتك من الخادم ولا يمكن التراجع عنه.</p>');
 };
+async function ctLoad(){
+  const el=document.getElementById('ct-info');if(!el)return;
+  try{const r=await CLOUD.client.from('user_contact').select('email').maybeSingle();const m=r.data&&r.data.email;CLOUD.mail=m||'';el.textContent=m?maskMail(m):'غير مربوط. لن تستطيع استرجاع كلمة المرور إن نسيتها.'}catch(e){el.textContent='تعذر التحميل'}
+}
+ACT.ctedit=()=>{
+  sheet('<h3>بريد الاسترجاع</h3><p class="mut sm">اكتب بريداً يخصك أنت؛ سيصله كود استرجاع كلمة المرور فقط، ولا نستخدمه لأي غرض آخر.</p><label class="f">البريد<input id="ct-mail" type="email" dir="ltr" maxlength="120" value="'+esc(CLOUD.mail||'')+'" placeholder="you@example.com" style="text-align:left"></label><div class="ar-msg bad" id="ct-msg"></div><div class="row"><button class="btn" data-a="ctsave">حفظ</button>'+(CLOUD.mail?'<button class="btn d" data-a="ctdel">إزالة</button>':'')+'</div>');
+};
+ACT.ctsave=async()=>{
+  const m=(document.getElementById('ct-mail').value||'').trim().toLowerCase(),msg=document.getElementById('ct-msg');
+  if(!MAIL_RE.test(m)||m.length>120){msg.textContent='البريد غير صحيح. اكتبه بالإنجليزية مثل name@example.com';return}
+  const u=(st.get('profile',{}).username||'');
+  try{const r=await CLOUD.client.from('user_contact').upsert({username:u,user_id:CLOUD.user.id,email:m},{onConflict:'username'});if(r.error)throw r.error;CLOUD.mail=m;closeSheet();toast('تم ربط البريد')}catch(e){msg.textContent=CLOUD.msg(e)}
+};
+ACT.ctdel=async()=>{try{const r=await CLOUD.client.from('user_contact').delete().eq('user_id',CLOUD.user.id);if(r.error)throw r.error;CLOUD.mail='';closeSheet();toast('أُزيل البريد')}catch(e){toast(CLOUD.msg(e))}};
 ACT.syncnow=async()=>{toast('جارٍ المزامنة…');const ok=await CLOUD.flush();await CLOUD.pull();toast(ok?'تمت المزامنة':'تعذرت المزامنة، سنعيد المحاولة')};
 ACT.logout=()=>ask('سيُسجَّل خروجك وتُزال بياناتك من هذا الجهاز (تبقى في حسابك). متابعة؟','تسجيل الخروج',async()=>{
   toast('جارٍ الحفظ…');const ok=await CLOUD.flush();
