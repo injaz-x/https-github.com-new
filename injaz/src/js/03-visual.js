@@ -6,6 +6,7 @@ const SEC=[
   {id:'tasks',n:'المهام',sub:'اكتب، رتّب، أنجز',skin:'night',em:'cubes',c:'#8aa4f0'},
   {id:'log',n:'السجل اليومي',sub:'ماذا فعلت اليوم وكيف كان شعورك',skin:'night',em:'book',c:'#8aa4f0'},
   {id:'gym',n:'التمارين',sub:'الجيم، الأوزان، والتقدّم',skin:'night',em:'dumbbell',c:'#8aa4f0'},
+  {id:'fit',n:'الرياضة والصحة',sub:'رياضات وروتينات بمعايير عالمية',skin:'night',em:'dumbbell',c:'#8aa4f0'},
   {id:'food',n:'الأكل',sub:'سعرات محسوبة وسكر قليل',skin:'night',em:'apple',c:'#8aa4f0'},
   {id:'water',n:'الماء والنوم',sub:'ماء وقهوة وشاي ونوم كافٍ',skin:'night',em:'drop',c:'#8aa4f0'},
   {id:'routine',n:'الروتين',sub:'جدول يومك بالدقيقة',skin:'night',em:'clock',c:'#8aa4f0'},

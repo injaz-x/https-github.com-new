@@ -45,7 +45,7 @@ RD.gym=()=>{
   const prog=card('تقدّمك','<div class="tiles"><div class="tile"><b>'+wk+'/'+cfg.gymDays.length+'</b><span>تمارين هذا الأسبوع</span></div><div class="tile"><b>'+days.length+'</b><span>إجمالي التمارين</span></div><div class="tile"><b>'+streak+'</b><span>التزام متتالٍ</span></div></div>'+
     '<div class="row" style="margin:12px 0 4px"><label class="f">وزن الجسم اليوم (كجم)<input type="number" step="0.1" inputmode="decimal" id="bwin" value="'+(bw[k]||'')+'" style="width:130px"></label><button class="btn s" data-a="bwsave" style="align-self:flex-end">حفظ</button>'+(lastW?'<span class="mut sm" style="align-self:flex-end">آخر قياس '+lastW+' كجم</span>':'')+'</div>'+spark+
     (prl.length?'<div class="b" style="margin:10px 0 4px">أفضل أوزانك</div><ul class="list">'+prl.map(n=>'<li><span class="t">'+esc(n)+'</span><b class="ac num">'+pr[n].w+' كجم</b></li>').join('')+'</ul>':''));
-  return '<div class="grid">'+(gd?'':card('اليوم راحة','<p>جسمك يبني العضل أثناء الراحة. امشِ 20 دقيقة أو مدّد جسمك، ونم جيداً.</p>',{cls:'full glow'}))+cmp+log+rest+prog+week+'</div>';
+  return '<div class="grid">'+card('رياضات أخرى وروتينات','<p class="mut sm">كرة قدم، سباحة، يوغا، إطالة، روتينات منزلية وغيرها، مع أهداف صحية بمعايير منظمة الصحة العالمية.</p><button class="btn s" data-a="go" data-g="fit">افتح الرياضة والصحة</button>')+(gd?'':card('اليوم راحة','<p>جسمك يبني العضل أثناء الراحة. امشِ 20 دقيقة أو مدّد جسمك، ونم جيداً.</p>',{cls:'full glow'}))+cmp+log+rest+prog+week+'</div>';
 };
 CHG.split=t=>{cfg.split[+t.dataset.w]=t.value;saveCfg()};
 CHG.gymday=t=>{const w=+t.dataset.w,i=cfg.gymDays.indexOf(w);if(t.checked&&i<0)cfg.gymDays.push(w);if(!t.checked&&i>=0)cfg.gymDays.splice(i,1);saveCfg();renderSec('gym')};
